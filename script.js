@@ -1,148 +1,159 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const scoreDisplay = document.getElementById('score');
+const snakeValueDisplay = document.getElementById('snakeValue');
 const highscoreDisplay = document.getElementById('highscore');
 const startScreen = document.getElementById('start-screen');
 const gameoverScreen = document.getElementById('gameover-screen');
 
-let score = 0;
-let highscore = localStorage.getItem('pulse_highscore') || 0;
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
+
+let snake = [];
+let direction = 'RIGHT';
+let nextDirection = 'RIGHT';
+let food = { x: 0, y: 0, value: 1 };
+let snakeTotalValue = 5;
+let highscore = localStorage.getItem('math_snake_highscore') || 5;
 highscoreDisplay.innerText = highscore;
 
 let gameState = 'START'; // START, PLAYING, GAMEOVER
-
-// Cores neon do jogo
-const colors = ['#00f3ff', '#ff0055', '#ffe600', '#00ff66'];
-let playerColorIndex = 0;
-
-// Objeto Jogador (A Esfera central)
-let player = {
-    x: canvas.width / 2,
-    y: canvas.height - 80,
-    radius: 14
-};
-
-// Obstáculos em queda
-let obstacles = [];
-let gameSpeed = 3;
-let spawnTimer = 0;
+let gameInterval = null;
 
 function resetGame() {
-    score = 0;
-    scoreDisplay.innerText = score;
-    obstacles = [];
-    gameSpeed = 3;
-    playerColorIndex = 0;
-    spawnTimer = 0;
+    snake = [
+        { x: 10, y: 10 },
+        { x: 9, y: 10 },
+        { x: 8, y: 10 }
+    ];
+    snakeTotalValue = 5;
+    snakeValueDisplay.innerText = snakeTotalValue;
+    direction = 'RIGHT';
+    nextDirection = 'RIGHT';
+    gerarComida();
 }
 
-// Controles (Toque na tela ou clique)
+function gerarComida() {
+    food.x = Math.floor(Math.random() * tileCount);
+    food.y = Math.floor(Math.random() * tileCount);
+    
+    // A comida gera um valor proporcional ou ligeiramente desafiador baseado no tamanho da cobra
+    let minVal = Math.max(1, snakeTotalValue - 4);
+    let maxVal = snakeTotalValue + 6;
+    food.value = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+}
+
 window.addEventListener('pointerdown', () => {
-    if (gameState === 'START') {
-        startGame();
-    } else if (gameState === 'PLAYING') {
-        // Cicla a cor da esfera ao tocar
-        playerColorIndex = (playerColorIndex + 1) % colors.length;
-    } else if (gameState === 'GAMEOVER') {
-        startGame();
+    if (gameState === 'START' || gameState === 'GAMEOVER') {
+        iniciarJogo();
     }
 });
 
-function startGame() {
+function iniciarJogo() {
     resetGame();
     startScreen.classList.add('hidden');
     gameoverScreen.classList.add('hidden');
     gameState = 'PLAYING';
+    if (gameInterval) clearInterval(gameInterval);
+    gameInterval = setInterval(gameLoop, 120); // Velocidade da cobra
 }
+
+function mudarDirecao(novaDir) {
+    if (novaDir === 'UP' && direction !== 'DOWN') nextDirection = 'UP';
+    if (novaDir === 'DOWN' && direction !== 'UP') nextDirection = 'DOWN';
+    if (novaDir === 'LEFT' && direction !== 'RIGHT') nextDirection = 'LEFT';
+    if (novaDir === 'RIGHT' && direction !== 'LEFT') nextDirection = 'RIGHT';
+}
+
+// Controles por teclado para PC também
+window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp') mudarDirecao('UP');
+    if (e.key === 'ArrowDown') mudarDirecao('DOWN');
+    if (e.key === 'ArrowLeft') mudarDirecao('LEFT');
+    if (e.key === 'ArrowRight') mudarDirecao('RIGHT');
+});
 
 function gameOver() {
     gameState = 'GAMEOVER';
-    if (score > highscore) {
-        highscore = score;
-        localStorage.setItem('pulse_highscore', highscore);
+    clearInterval(gameInterval);
+    if (snakeTotalValue > highscore) {
+        highscore = snakeTotalValue;
+        localStorage.setItem('math_snake_highscore', highscore);
         highscoreDisplay.innerText = highscore;
     }
     gameoverScreen.classList.remove('hidden');
 }
 
-function spawnObstacle() {
-    let size = 45;
-    obstacles.push({
-        x: canvas.width / 2,
-        y: -50,
-        size: size,
-        colorIndex: Math.floor(Math.random() * colors.length)
-    });
-}
+function gameLoop() {
+    direction = nextDirection;
+    
+    // Calcula nova cabeça
+    let head = { ...snake[0] };
+    if (direction === 'UP') head.y--;
+    if (direction === 'DOWN') head.y++;
+    if (direction === 'LEFT') head.x--;
+    if (direction === 'RIGHT') head.x++;
 
-function update() {
-    if (gameState !== 'PLAYING') return;
-
-    spawnTimer++;
-    if (spawnTimer > 70) {
-        spawnObstacle();
-        spawnTimer = 0;
-        gameSpeed += 0.05; // Aumenta a dificuldade progressivamente
+    // Colisão com as bordas (Game Over)
+    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+        gameOver();
+        return;
     }
 
-    // Atualiza obstáculos
-    for (let i = obstacles.length - 1; i >= 0; i--) {
-        obstacles[i].y += gameSpeed;
-
-        // Condição de colisão simples com o jogador na base
-        if (
-            obstacles[i].y + obstacles[i].size / 2 >= player.y - player.radius &&
-            obstacles[i].y - obstacles[i].size / 2 <= player.y + player.radius
-        ) {
-            // Verifica se a cor bate com a do obstáculo
-            if (obstacles[i].colorIndex === playerColorIndex) {
-                score += 10;
-                scoreDisplay.innerText = score;
-                obstacles.splice(i, 1); // Passou com sucesso!
-                continue;
-            } else {
-                gameOver(); // Bateu na cor errada!
-            }
-        }
-
-        // Remove obstáculos que passaram da tela
-        if (obstacles[i].y > canvas.height + 50) {
-            obstacles.splice(i, 1);
+    // Colisão com o próprio corpo
+    for (let part of snake) {
+        if (head.x === part.x && head.y === part.y) {
+            gameOver();
+            return;
         }
     }
+
+    snake.unshift(head);
+
+    // Verifica se comeu a comida
+    if (head.x === food.x && head.y === food.y) {
+        // REGRA PRINCIPAL: A cobra só pode comer se o valor dela for >= ao valor da comida
+        if (snakeTotalValue >= food.value) {
+            snakeTotalValue += food.value; // Soma o valor ao corpo
+            snakeValueDisplay.innerText = snakeTotalValue;
+            gerarComida();
+        } else {
+            // Se for menor, quebra!
+            gameOver();
+            return;
+        }
+    } else {
+        snake.pop(); // Remove a cauda se não comeu
+    }
+
+    draw();
 }
 
 function draw() {
-    // Limpa o canvas
-    ctx.fillStyle = '#090914';
+    // Fundo do tabuleiro
+    ctx.fillStyle = '#050811';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Desenha obstáculos
-    for (let obs of obstacles) {
-        ctx.fillStyle = colors[obs.colorIndex];
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = colors[obs.colorIndex];
-        ctx.fillRect(obs.x - obs.size / 2, obs.y - 15, obs.size, 30);
-    }
-    ctx.shadowBlur = 0; // Reseta sombra
-
-    // Desenha o Jogador (Esfera neon)
+    // Desenha a Comida (Bolinha com número)
+    ctx.fillStyle = '#ef4444';
     ctx.beginPath();
-    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-    ctx.fillStyle = colors[playerColorIndex];
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = colors[playerColorIndex];
+    ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.closePath();
-    ctx.shadowBlur = 0;
+
+    // Número dentro da comida
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(food.value, food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
+
+    // Desenha a Cobra
+    snake.forEach((part, index) => {
+        ctx.fillStyle = index === 0 ? '#38bdf8' : '#0284c7';
+        ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
+    });
 }
 
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-// Inicia o loop de renderização
-loop();
+// Desenha estado inicial estático
+resetGame();
+draw();
