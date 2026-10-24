@@ -10,30 +10,29 @@
     <div id="game-container">
         <header>
             <h1>MATH SNAKE</h1>
-            <div id="scoreboard">Valor da Cobra: <span id="snakeValue">5</span> | Recorde: <span id="highscore">5</span></div>
+            <div id="scoreboard">Valor: <span id="snakeValue">5</span> | Recorde: <span id="highscore">5</span></div>
         </header>
 
         <div id="canvas-wrapper">
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
+            <canvas id="gameCanvas" width="360" height="360"></canvas>
             <div id="start-screen" class="overlay">
                 <h2>TOQUE PARA JOGAR</h2>
-                <p>Coma apenas números menores que o seu!</p>
+                <p>Coma números menores que o seu!</p>
             </div>
             <div id="gameover-screen" class="overlay hidden">
-                <h2>QUEBROU! (GAME OVER)</h2>
-                <p>Sua alavancagem era menor que o ativo.</p>
-                <p style="font-size: 0.8rem; margin-top: 10px; color: #38bdf8;">Toque para reiniciar</p>
+                <h2 style="color: #f87171;">QUEBROU!</h2>
+                <p>Sua alavancagem era menor.</p>
+                <p style="font-size: 0.85rem; margin-top: 8px; color: #38bdf8;">Toque para reiniciar</p>
             </div>
         </div>
 
+        <!-- Botões de direção grandes e ergonômicos -->
         <div id="controls">
-            <div class="control-row">
-                <button class="control-btn" onclick="mudarDirecao('UP')">⬆️</button>
-            </div>
-            <div class="control-row">
-                <button class="control-btn" onclick="mudarDirecao('LEFT')">⬅️</button>
-                <button class="control-btn" onclick="mudarDirecao('DOWN')">⬇️</button>
-                <button class="control-btn" onclick="mudarDirecao('RIGHT')">➡️</button>
+            <button class="control-btn btn-up" onclick="mudarDirecao('UP')">⬆️</button>
+            <div class="control-middle">
+                <button class="control-btn btn-left" onclick="mudarDirecao('LEFT')">⬅️</button>
+                <button class="control-btn btn-down" onclick="mudarDirecao('DOWN')">⬇️</button>
+                <button class="control-btn btn-right" onclick="mudarDirecao('RIGHT')">➡️</button>
             </div>
         </div>
     </div>
