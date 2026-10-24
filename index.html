@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pulse Rush - O Jogo Supremo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>PULSE RUSH</h1>
+            <div id="scoreboard">Score: <span id="score">0</span> | Record: <span id="highscore">0</span></div>
+        </header>
+
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas" width="360" height="500"></canvas>
+            <div id="start-screen" class="overlay">
+                <h2>TOQUE PARA JOGAR</h2>
+                <p>Mude a cor no momento certo!</p>
+            </div>
+            <div id="gameover-screen" class="overlay hidden">
+                <h2>GAME OVER</h2>
+                <p>Toque para reiniciar</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
